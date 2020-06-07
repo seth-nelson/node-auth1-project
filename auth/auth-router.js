@@ -24,8 +24,10 @@ router.post('/login', async (req, res) => {
 
     try {
         // first() returns undefined object if the array is empty
+        // takes 2 args: the entered password, and the stored user's hash
         const user = await Users.findBy({ username }).first();
         if (user && bcrypt.compareSync(password, user.password)) {
+            req.session.user = user;
             res.status(200).json({ message: `Welcome, ${username}.`})
         } else {
             res.status(401).json({ message: 'Invalid credentials.'});
@@ -36,7 +38,19 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// 
-
+// AUTH logout (log the user out if there is a session found)
+router.get('/logout', (req, res) => {
+    if (req.session) {
+        req.session.destroy( err => {
+            if (err) {
+                res.send('Error logging out.')
+            } else {
+                res.send('You have logged out. See you next time!');
+            }
+        });
+    } else {
+        res.end();
+    }
+});
 
 module.exports = router;
