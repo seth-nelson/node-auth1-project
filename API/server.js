@@ -2,6 +2,12 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const session = require('express-session');
+const knexSessionConnect = require('connect-session-knex');
+// Can also do this for same result below
+// const knexSessionConnect = require('connect-session-knex')(session);
+
+const knexSessionStore = knexSessionConnect(session);
+
 
 // Creates a session in memory, send that ID cookie to grant auth
 // Cookie will be forcibly secured through the browser
@@ -14,7 +20,17 @@ const sessionConfig = {
         httpOnly: true
     },
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+
+    // This is so express session manager knows how to store
+    // session info in db
+    store: new knexSessionStore({
+        knex: require('../data/db-config.js'),
+        tablename: 'sessions',
+        sidfieldname: 'sid',
+        createtable: true,
+        clearInterval: 1000 * 60 * 60
+    })
 };
 
 const userRouter = require('../users/user-router.js');
